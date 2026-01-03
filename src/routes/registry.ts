@@ -21,15 +21,10 @@ registry.post("/register", async (c) => {
     return c.json({ error: "Missing required fields: url, name, owner, price, token" }, 400);
   }
 
-  // Verify the endpoint is x402 compliant
+  // Verify the endpoint is x402 compliant (best effort - CF worker-to-worker can be flaky)
   const verification = await verifyX402Endpoint(url);
-  if (!verification.valid) {
-    return c.json({
-      error: "Endpoint is not x402 compliant",
-      details: verification.error,
-      help: "Your endpoint must return 402 with payment requirements",
-    }, 400);
-  }
+  // Allow registration even if verification fails - mark as unverified
+  const isVerified = verification.valid;
 
   const id = generateId();
   const endpoint: Endpoint = {
@@ -43,7 +38,7 @@ registry.post("/register", async (c) => {
     tags: tags || [],
     category: category || "utility",
     openApiSpec,
-    verified: verification.valid,
+    verified: isVerified,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     stats: {
