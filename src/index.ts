@@ -7,57 +7,67 @@
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { registry } from "./routes/registry";
-import { agents } from "./routes/agents";
+import { registry, endpoints } from "./routes/registry";
+import { agents, agentRegistry } from "./routes/agents";
 import { payments } from "./routes/payments";
 import { analytics } from "./routes/analytics";
 import { dev } from "./routes/dev";
+import { renderHomePage } from "./frontend";
 
 const app = new Hono();
 
 app.use("*", cors());
 
-// API info
+// Homepage - serve HTML for browsers, JSON for API clients
 app.get("/", (c) => {
+  const accept = c.req.header("Accept") || "";
+  const isBrowser = accept.includes("text/html");
+
+  if (isBrowser) {
+    const endpointList = Array.from(endpoints.values()).map(e => ({
+      id: e.id,
+      name: e.name,
+      description: e.description,
+      price: e.price,
+      token: e.token,
+      tags: e.tags,
+      category: e.category,
+      verified: e.verified,
+      calls24h: e.stats.calls24h,
+    }));
+
+    const agentList = Array.from(agentRegistry.values()).map(a => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      capabilities: a.capabilities,
+      pricing: a.pricing,
+    }));
+
+    const html = renderHomePage({
+      endpoints: endpointList,
+      agents: agentList,
+      stats: { totalEndpoints: endpointList.length, totalAgents: agentList.length },
+    });
+
+    return c.html(html);
+  }
+
   return c.json({
     name: "x402 Registry",
     version: "1.0.0",
     tagline: "The App Store for AI Agents",
     description: "Discover, register, and orchestrate x402-gated endpoints",
     endpoints: {
-      "GET /": "API info",
+      "GET /": "API info (HTML for browsers)",
       "GET /stats": "Platform statistics",
-
-      // Registry
       "POST /registry/register": "Register your x402 endpoint",
       "GET /registry/search": "Search endpoints by tag/category",
       "GET /registry/discover": "Trending and featured endpoints",
-      "GET /registry/:id": "Get endpoint details",
-      "GET /registry/:id/stats": "Endpoint usage statistics",
-      "DELETE /registry/:id": "Remove your endpoint",
-
-      // Agents
-      "GET /agents/capabilities": "What can agents do?",
-      "POST /agents/recommend": "Find agents for a task",
-      "GET /agents/:id/openapi": "Machine-readable spec",
+      "GET /agents": "List all agents",
+      "POST /agents/register": "Register an agent",
       "POST /agents/execute": "Execute a task across agents",
-      "POST /agents/chain": "Compose multiple agents",
-
-      // Payments
-      "POST /payments/create-invoice": "Create payment request",
       "POST /payments/verify": "Verify a payment",
-      "GET /payments/balance/:address": "Check credit balance",
-      "POST /payments/deposit": "Add credits",
-      "POST /payments/subscribe": "Set up recurring payments",
-
-      // Analytics
-      "GET /analytics/my-endpoints": "Your endpoint stats",
-      "GET /analytics/revenue": "Revenue dashboard",
-      "GET /analytics/callers": "Who's calling your APIs",
-
-      // Developer Tools
-      "POST /dev/generate-middleware": "Generate x402 middleware code",
-      "POST /dev/test-endpoint": "Validate your x402 setup",
       "GET /dev/pricing-calculator": "Optimal pricing suggestions",
     },
     tokens: ["STX", "sBTC", "USDh"],

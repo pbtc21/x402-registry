@@ -11,7 +11,7 @@ import type { Agent, ExecutionRequest, ExecutionResult, RegistryEnv } from "../t
 export const agents = new Hono<{ Bindings: RegistryEnv }>();
 
 // In-memory store for PoC
-const agentRegistry = new Map<string, Agent>();
+export const agentRegistry = new Map<string, Agent>();
 
 // Capability index for fast lookup
 const capabilityIndex = new Map<string, Set<string>>(); // capability -> agent IDs

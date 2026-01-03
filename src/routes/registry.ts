@@ -8,7 +8,7 @@ import type { Endpoint, RegistryEnv } from "../types";
 export const registry = new Hono<{ Bindings: RegistryEnv }>();
 
 // In-memory store for PoC (replace with D1 in production)
-const endpoints = new Map<string, Endpoint>();
+export const endpoints = new Map<string, Endpoint>();
 
 // Register a new endpoint
 registry.post("/register", async (c) => {
