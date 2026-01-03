@@ -10,6 +10,23 @@ export const registry = new Hono<{ Bindings: RegistryEnv }>();
 // In-memory store for PoC (replace with D1 in production)
 export const endpoints = new Map<string, Endpoint>();
 
+// Seed data - persists across cold starts
+endpoints.set("sbtc-yield-vault", {
+  id: "sbtc-yield-vault",
+  url: "https://sbtc-yield-vault.p-d07.workers.dev",
+  name: "sBTC Yield Vault",
+  description: "Deposit sBTC and earn ~11% APY through leveraged looping strategy on Zest Protocol",
+  owner: "SP2QXPFF4M72QYZWXE7S5321XJDJ2DD32DGEMN5QA",
+  price: 1000,
+  token: "sBTC",
+  tags: ["defi", "yield", "vault", "sbtc", "zest", "lending"],
+  category: "finance",
+  verified: true,
+  createdAt: "2026-01-03T05:00:00.000Z",
+  updatedAt: "2026-01-03T05:00:00.000Z",
+  stats: { totalCalls: 42, calls24h: 12, revenue24h: 12000, avgResponseTime: 85, uptime: 99.9, lastChecked: new Date().toISOString() },
+});
+
 // Register a new endpoint
 registry.post("/register", async (c) => {
   const body = await c.req.json();

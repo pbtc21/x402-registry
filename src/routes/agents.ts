@@ -16,6 +16,21 @@ export const agentRegistry = new Map<string, Agent>();
 // Capability index for fast lookup
 const capabilityIndex = new Map<string, Set<string>>(); // capability -> agent IDs
 
+// Seed data
+agentRegistry.set("sbtc-yield-agent", {
+  id: "sbtc-yield-agent",
+  name: "sBTC Yield Agent",
+  description: "Autonomous DeFi agent for sBTC yield optimization. Deposits to vault, monitors positions, and executes looping strategies on Zest Protocol.",
+  capabilities: ["defi", "yield-farming", "lending", "blockchain-query", "data-transform"],
+  endpoints: ["https://sbtc-yield-vault.p-d07.workers.dev"],
+  owner: "SP2QXPFF4M72QYZWXE7S5321XJDJ2DD32DGEMN5QA",
+  pricing: { model: "per-call", basePrice: 500, token: "sBTC" },
+});
+// Index capabilities
+["defi", "yield-farming", "lending", "blockchain-query", "data-transform"].forEach(cap => {
+  capabilityIndex.set(cap, new Set(["sbtc-yield-agent"]));
+});
+
 // What can agents do?
 agents.get("/capabilities", (c) => {
   const allCapabilities = Array.from(capabilityIndex.keys()).sort();
