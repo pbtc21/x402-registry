@@ -1,7 +1,13 @@
 name = "x402-registry"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
+workers_dev = true
 
 [vars]
 REGISTRY_WALLET = "SP2QXPFF4M72QYZWXE7S5321XJDJ2DD32DGEMN5QA"
 PLATFORM_FEE_BPS = "1000"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "x402-registry-db"
+database_id = "18e1b27d-eb0d-4256-930d-834c713d6d9b"

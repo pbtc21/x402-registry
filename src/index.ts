@@ -7,33 +7,35 @@
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { registry, endpoints } from "./routes/registry";
+import { registry } from "./routes/registry";
 import { agents, agentRegistry } from "./routes/agents";
 import { payments } from "./routes/payments";
 import { analytics } from "./routes/analytics";
 import { dev } from "./routes/dev";
 import { renderHomePage } from "./frontend";
+import type { RegistryEnv } from "./types";
 
-const app = new Hono();
+const app = new Hono<{ Bindings: RegistryEnv }>();
 
 app.use("*", cors());
 
 // Homepage - serve HTML for browsers, JSON for API clients
-app.get("/", (c) => {
+app.get("/", async (c) => {
   const accept = c.req.header("Accept") || "";
   const isBrowser = accept.includes("text/html");
 
   if (isBrowser) {
-    const endpointList = Array.from(endpoints.values()).map(e => ({
-      id: e.id,
-      name: e.name,
-      description: e.description,
-      price: e.price,
-      token: e.token,
-      tags: e.tags,
-      category: e.category,
-      verified: e.verified,
-      calls24h: e.stats.calls24h,
+    const results = await c.env.DB.prepare("SELECT * FROM endpoints ORDER BY calls_24h DESC").all();
+    const endpointList = (results.results || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      price: row.price,
+      token: row.token,
+      tags: JSON.parse(row.tags || "[]"),
+      category: row.category,
+      verified: Boolean(row.verified),
+      calls24h: row.calls_24h || 0,
     }));
 
     const agentList = Array.from(agentRegistry.values()).map(a => ({
@@ -76,13 +78,17 @@ app.get("/", (c) => {
 });
 
 // Platform stats
-app.get("/stats", (c) => {
+app.get("/stats", async (c) => {
+  const countResult = await c.env.DB.prepare("SELECT COUNT(*) as total FROM endpoints").first<{ total: number }>();
+  const callsResult = await c.env.DB.prepare("SELECT SUM(calls_24h) as calls FROM endpoints").first<{ calls: number }>();
+  const categories = await c.env.DB.prepare("SELECT DISTINCT category FROM endpoints").all();
+
   return c.json({
-    totalEndpoints: 0,
-    totalAgents: 0,
-    totalCalls24h: 0,
+    totalEndpoints: countResult?.total || 0,
+    totalAgents: agentRegistry.size,
+    totalCalls24h: callsResult?.calls || 0,
     totalVolume24h: "0",
-    topCategories: ["ai", "blockchain", "data", "utility"],
+    topCategories: (categories.results || []).map((c: any) => c.category),
     featuredEndpoints: [],
   });
 });
