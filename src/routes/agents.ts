@@ -22,7 +22,7 @@ agentRegistry.set("sbtc-yield-agent", {
   name: "sBTC Yield Agent",
   description: "Autonomous DeFi agent for sBTC yield optimization. Deposits to vault, monitors positions, and executes looping strategies on Zest Protocol.",
   capabilities: ["defi", "yield-farming", "lending", "blockchain-query", "data-transform"],
-  endpoints: ["https://sbtc-yield-vault.p-d07.workers.dev"],
+  endpoints: ["https://vault.pbtc21.dev"],
   owner: "SP2QXPFF4M72QYZWXE7S5321XJDJ2DD32DGEMN5QA",
   pricing: { model: "per-call", basePrice: 500, token: "sBTC" },
 });

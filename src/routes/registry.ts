@@ -76,7 +76,7 @@ registry.post("/register", async (c) => {
 
   return c.json({
     success: true,
-    endpoint: { id, url, name, verified: isVerified, registryUrl: `https://x402-registry.p-d07.workers.dev/registry/${id}` },
+    endpoint: { id, url, name, verified: isVerified, registryUrl: `https://registry.pbtc21.dev/registry/${id}` },
     message: "Endpoint registered successfully! It will appear in search results.",
   }, 201);
 });
