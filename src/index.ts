@@ -12,7 +12,7 @@ import { agents, agentRegistry } from "./routes/agents";
 import { payments } from "./routes/payments";
 import { analytics } from "./routes/analytics";
 import { dev } from "./routes/dev";
-import { renderHomePage } from "./frontend";
+import { renderHomePage, renderMyEndpointsPage } from "./frontend";
 import type { RegistryEnv } from "./types";
 
 const app = new Hono<{ Bindings: RegistryEnv }>();
@@ -75,6 +75,36 @@ app.get("/", async (c) => {
     tokens: ["STX", "sBTC", "USDh"],
     network: "stacks-mainnet",
   });
+});
+
+// My Endpoints dashboard
+app.get("/my/:address", async (c) => {
+  const address = c.req.param("address");
+
+  const results = await c.env.DB.prepare(
+    "SELECT * FROM endpoints WHERE owner = ? ORDER BY calls_24h DESC"
+  ).bind(address).all();
+
+  const endpointList = (results.results || []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    url: row.url,
+    price: row.price,
+    token: row.token,
+    tags: JSON.parse(row.tags || "[]"),
+    category: row.category,
+    verified: Boolean(row.verified),
+    calls24h: row.calls_24h || 0,
+  }));
+
+  const html = renderMyEndpointsPage({
+    endpoints: endpointList,
+    address,
+    stats: { totalEndpoints: endpointList.length },
+  });
+
+  return c.html(html);
 });
 
 // Platform stats
