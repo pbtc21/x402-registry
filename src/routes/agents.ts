@@ -167,6 +167,69 @@ agents.get("/:id/openapi", (c) => {
   return c.json(spec);
 });
 
+// x402 discovery for /execute endpoint
+agents.get("/execute", (c) => {
+  return c.json({
+    x402Version: 1,
+    name: "x402 Registry - Agent Execution",
+    accepts: [{
+      scheme: "exact",
+      network: "stacks",
+      maxAmountRequired: "variable",
+      resource: "/agents/execute",
+      description: "Execute a task across multiple AI agents with automatic orchestration",
+      mimeType: "application/json",
+      payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+      maxTimeoutSeconds: 600,
+      asset: "STX",
+      outputSchema: {
+        input: {
+          type: "object",
+          properties: {
+            task: { type: "string", description: "Natural language task description" },
+            budget: { type: "number", description: "Maximum budget in smallest unit" },
+            token: { type: "string", enum: ["STX", "sBTC", "USDh"], description: "Payment token" },
+            preferredAgents: { type: "array", items: { type: "string" }, description: "Optional list of preferred agent IDs" },
+            timeout: { type: "number", description: "Optional timeout in milliseconds" },
+          },
+          required: ["task", "budget", "token"],
+        },
+        output: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "Execution ID" },
+            task: { type: "string" },
+            status: { type: "string", enum: ["completed", "failed", "pending"] },
+            result: {
+              type: "object",
+              properties: {
+                summary: { type: "string" },
+                output: { type: "string" },
+                confidence: { type: "number" },
+              },
+            },
+            agentsUsed: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  agentId: { type: "string" },
+                  endpoint: { type: "string" },
+                  cost: { type: "number" },
+                  responseTime: { type: "number" },
+                },
+              },
+            },
+            totalCost: { type: "number" },
+            platformFee: { type: "number" },
+            duration: { type: "number" },
+          },
+        },
+      },
+    }],
+  });
+});
+
 // Execute a task (the killer feature)
 agents.post("/execute", async (c) => {
   const body = await c.req.json() as ExecutionRequest;
@@ -246,6 +309,81 @@ agents.post("/execute", async (c) => {
   };
 
   return c.json(result);
+});
+
+// x402 discovery for /chain endpoint
+agents.get("/chain", (c) => {
+  return c.json({
+    x402Version: 1,
+    name: "x402 Registry - Agent Chaining",
+    accepts: [{
+      scheme: "exact",
+      network: "stacks",
+      maxAmountRequired: "variable",
+      resource: "/agents/chain",
+      description: "Chain multiple agents in sequence for complex multi-step tasks",
+      mimeType: "application/json",
+      payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+      maxTimeoutSeconds: 900,
+      asset: "STX",
+      outputSchema: {
+        input: {
+          type: "object",
+          properties: {
+            steps: {
+              type: "array",
+              description: "Ordered list of agent steps",
+              items: {
+                type: "object",
+                properties: {
+                  agentId: { type: "string", description: "Agent ID to execute" },
+                  action: { type: "string", description: "Action for the agent" },
+                  inputFrom: { type: "string", description: "Source of input (user or previous step)" },
+                },
+                required: ["agentId"],
+              },
+            },
+            budget: { type: "number", description: "Maximum budget for entire chain" },
+            token: { type: "string", enum: ["STX", "sBTC", "USDh"] },
+          },
+          required: ["steps"],
+        },
+        output: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            status: { type: "string" },
+            chain: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  step: { type: "number" },
+                  agentId: { type: "string" },
+                  agentName: { type: "string" },
+                  action: { type: "string" },
+                  estimatedCost: { type: "number" },
+                },
+              },
+            },
+            results: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  step: { type: "number" },
+                  status: { type: "string" },
+                  output: { type: "string" },
+                },
+              },
+            },
+            totalCost: { type: "number" },
+            platformFee: { type: "number" },
+          },
+        },
+      },
+    }],
+  });
 });
 
 // Chain multiple agents

@@ -208,6 +208,61 @@ payments.post("/deposit", async (c) => {
   });
 });
 
+// x402 discovery for /subscribe endpoint
+payments.get("/subscribe", (c) => {
+  return c.json({
+    x402Version: 1,
+    name: "x402 Registry - Subscriptions",
+    accepts: [{
+      scheme: "exact",
+      network: "stacks",
+      maxAmountRequired: "50000",
+      resource: "/payments/subscribe",
+      description: "Subscribe to an endpoint for discounted bulk access",
+      mimeType: "application/json",
+      payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+      maxTimeoutSeconds: 300,
+      asset: "STX",
+      plans: {
+        basic: { calls: 100, price: 1000, period: "month" },
+        pro: { calls: 1000, price: 8000, period: "month" },
+        unlimited: { calls: -1, price: 50000, period: "month" },
+      },
+      outputSchema: {
+        input: {
+          type: "object",
+          properties: {
+            subscriber: { type: "string", description: "Stacks address of subscriber" },
+            endpointId: { type: "string", description: "ID of endpoint to subscribe to" },
+            plan: { type: "string", enum: ["basic", "pro", "unlimited"], description: "Subscription tier" },
+            token: { type: "string", enum: ["STX", "sBTC", "USDh"] },
+          },
+          required: ["subscriber", "endpointId", "plan"],
+        },
+        output: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            subscription: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                subscriber: { type: "string" },
+                endpointId: { type: "string" },
+                plan: { type: "string" },
+                callsRemaining: { type: "number" },
+                startsAt: { type: "string" },
+                expiresAt: { type: "string" },
+                status: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    }],
+  });
+});
+
 // Set up subscription
 payments.post("/subscribe", async (c) => {
   const body = await c.req.json();

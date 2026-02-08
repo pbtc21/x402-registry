@@ -107,6 +107,159 @@ app.get("/my/:address", async (c) => {
   return c.html(html);
 });
 
+// x402 discovery - root level discovery for all paid endpoints
+app.get("/.well-known/x402", async (c) => {
+  return c.json({
+    x402Version: 1,
+    name: "x402 Registry",
+    description: "The App Store for AI Agents - discover, register, and orchestrate x402-gated endpoints",
+    network: "stacks",
+    accepts: [
+      {
+        scheme: "exact",
+        network: "stacks",
+        maxAmountRequired: "1000",
+        resource: "/registry/register",
+        description: "Register your x402 endpoint in the registry",
+        mimeType: "application/json",
+        payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+        maxTimeoutSeconds: 300,
+        asset: "STX",
+        outputSchema: {
+          input: {
+            type: "object",
+            properties: {
+              url: { type: "string", description: "URL of the x402 endpoint" },
+              name: { type: "string", description: "Human-readable name" },
+              description: { type: "string", description: "What the endpoint does" },
+              owner: { type: "string", description: "Stacks address of owner" },
+              price: { type: "number", description: "Price per call in smallest unit" },
+              token: { type: "string", enum: ["STX", "sBTC", "USDh"] },
+              tags: { type: "array", items: { type: "string" } },
+              category: { type: "string" },
+            },
+            required: ["url", "name", "owner", "price", "token"],
+          },
+          output: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              endpoint: { type: "object" },
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+      {
+        scheme: "exact",
+        network: "stacks",
+        maxAmountRequired: "variable",
+        resource: "/agents/execute",
+        description: "Execute a task across multiple AI agents",
+        mimeType: "application/json",
+        payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+        maxTimeoutSeconds: 600,
+        asset: "STX",
+        outputSchema: {
+          input: {
+            type: "object",
+            properties: {
+              task: { type: "string", description: "Task to execute" },
+              budget: { type: "number", description: "Maximum budget in smallest unit" },
+              token: { type: "string", enum: ["STX", "sBTC", "USDh"] },
+              preferredAgents: { type: "array", items: { type: "string" } },
+              timeout: { type: "number" },
+            },
+            required: ["task", "budget", "token"],
+          },
+          output: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              status: { type: "string" },
+              result: { type: "object" },
+              agentsUsed: { type: "array" },
+              totalCost: { type: "number" },
+            },
+          },
+        },
+      },
+      {
+        scheme: "exact",
+        network: "stacks",
+        maxAmountRequired: "variable",
+        resource: "/agents/chain",
+        description: "Chain multiple agents in sequence",
+        mimeType: "application/json",
+        payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+        maxTimeoutSeconds: 900,
+        asset: "STX",
+        outputSchema: {
+          input: {
+            type: "object",
+            properties: {
+              steps: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    agentId: { type: "string" },
+                    action: { type: "string" },
+                    inputFrom: { type: "string" },
+                  },
+                },
+              },
+              budget: { type: "number" },
+              token: { type: "string" },
+            },
+            required: ["steps"],
+          },
+          output: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              status: { type: "string" },
+              chain: { type: "array" },
+              results: { type: "array" },
+              totalCost: { type: "number" },
+            },
+          },
+        },
+      },
+      {
+        scheme: "exact",
+        network: "stacks",
+        maxAmountRequired: "50000",
+        resource: "/payments/subscribe",
+        description: "Subscribe to an endpoint for discounted bulk access",
+        mimeType: "application/json",
+        payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+        maxTimeoutSeconds: 300,
+        asset: "STX",
+        outputSchema: {
+          input: {
+            type: "object",
+            properties: {
+              subscriber: { type: "string", description: "Stacks address" },
+              endpointId: { type: "string" },
+              plan: { type: "string", enum: ["basic", "pro", "unlimited"] },
+              token: { type: "string" },
+            },
+            required: ["subscriber", "endpointId", "plan"],
+          },
+          output: {
+            type: "object",
+            properties: {
+              success: { type: "boolean" },
+              subscription: { type: "object" },
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
 // Platform stats
 app.get("/stats", async (c) => {
   const countResult = await c.env.DB.prepare("SELECT COUNT(*) as total FROM endpoints").first<{ total: number }>();

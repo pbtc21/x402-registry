@@ -51,6 +51,59 @@ function summarizeEndpoint(e: Endpoint) {
   };
 }
 
+// x402 discovery for /register endpoint
+registry.get("/register", (c) => {
+  return c.json({
+    x402Version: 1,
+    name: "x402 Registry - Register Endpoint",
+    accepts: [{
+      scheme: "exact",
+      network: "stacks",
+      maxAmountRequired: "1000",
+      resource: "/registry/register",
+      description: "Register your x402 endpoint in the App Store for AI Agents",
+      mimeType: "application/json",
+      payTo: "SPKH9AWG0ENZ87J1X0PBD4HETP22G8W22AFNVF8K",
+      maxTimeoutSeconds: 300,
+      asset: "STX",
+      outputSchema: {
+        input: {
+          type: "object",
+          properties: {
+            url: { type: "string", description: "URL of the x402 endpoint" },
+            name: { type: "string", description: "Human-readable name" },
+            description: { type: "string", description: "What the endpoint does" },
+            owner: { type: "string", description: "Stacks address of owner" },
+            price: { type: "number", description: "Price per call in smallest unit" },
+            token: { type: "string", enum: ["STX", "sBTC", "USDh"] },
+            tags: { type: "array", items: { type: "string" } },
+            category: { type: "string" },
+            openApiSpec: { type: "string", description: "Optional OpenAPI spec URL" },
+          },
+          required: ["url", "name", "owner", "price", "token"],
+        },
+        output: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            endpoint: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                url: { type: "string" },
+                name: { type: "string" },
+                verified: { type: "boolean" },
+                registryUrl: { type: "string" },
+              },
+            },
+            message: { type: "string" },
+          },
+        },
+      },
+    }],
+  });
+});
+
 // Register a new endpoint
 registry.post("/register", async (c) => {
   const body = await c.req.json();
